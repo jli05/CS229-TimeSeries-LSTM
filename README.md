@@ -19,9 +19,11 @@ Step-by-Step:
 
 ## Results
 For a Stochastic Volatility process, the Spearman correlation is around 0.55+/-0.2 whether we fit a Linear Regressor or a Random Forest Regressor.
+
 ![Spearman correlation for Random Forest Regressor on test trajectories](doc/hist-spearman-correl-rf.png)
 
 For a Regime-Switching process, the Cross-Entropy is 0.64+/-0.1 for a Logistic Classifier and 1.2+/-0.4 for a Random Forest Classifier.
+
 ![Cross-Entropy for Random Forest Classifier on test trajectories](doc/hist-ce-rs-rf.png)
 
 ## Conclusion
