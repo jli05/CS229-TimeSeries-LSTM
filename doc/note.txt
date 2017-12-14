@@ -1,0 +1,220 @@
+GSPC from 1980-01-01
+
+> arima(r, c(2, 0, 2))
+
+Call:
+arima(x = r, order = c(2, 0, 2))
+
+Coefficients:
+         ar1     ar2      ma1      ma2  intercept
+      0.0868  0.3667  -0.1150  -0.4068      3e-04
+s.e.  0.1636  0.1446   0.1603   0.1427      1e-04
+
+sigma^2 estimated as 0.0001248:  log likelihood = 28662.03,  aic = -57312.06
+
+
+> arima(r, c(2, 0, 0))
+
+Call:
+arima(x = r, order = c(2, 0, 0))
+
+Coefficients:
+          ar1      ar2  intercept
+      -0.0277  -0.0425      3e-04
+s.e.   0.0103   0.0103      1e-04
+
+sigma^2 estimated as 0.0001249:  log likelihood = 28658.74,  aic = -57309.49
+
+> arima(r, c(1, 0, 0))
+
+Call:
+arima(x = r, order = c(1, 0, 0))
+
+Coefficients:
+          ar1  intercept
+      -0.0265      3e-04
+s.e.   0.0104      1e-04
+
+sigma^2 estimated as 0.0001251:  log likelihood = 28650.3,  aic = -57294.6
+
+
+SV:
+(1, 0, 0)
+(np.median(trace['beta']), np.median(trace['sigma']),
+ np.median(trace['neg_log_variance_intercept']))
+Out[81]:
+(0.98205586812223877, 0.1635689112466189, 3.9608558409834633)
+
+(2, 0, 0)
+(np.median(trace['beta']), np.median(trace['sigma']),
+ np.median(trace['neg_log_variance_intercept']))
+Out[89]:
+(0.98176456504570053, 0.16471374503844233, 3.9659486129378063)
+
+
+
+
+LSTM 
+ARIMA(1, 0, 0)
+cost, cost_no_noise 
+0.016, 0.012
+Spearman R (pred - y_pre_innov, eps)
+0.0019, 0.1635
+
+cost, cost_no_noise 
+0.0127, 0.006
+Spearman R (pred - y_pre_innov, eps)
+0.00029, 0.83
+
+ARIMA(2, 0, 0)
+cost, cost_no_noise
+0.019, 0.015
+Spearman R (pred - y_pre_innov, eps)
+0.0015, 0.289
+
+
+ARIMA(2, 0, 2)
+keep_prob=1.0
+run 20 OK-ish
+0.003-0.004
+
+iteration 300 run 50
+In [7]: np.sqrt(np.mean(a[:, 50:].ravel() ** 2))
+Out[7]: 0.043281981297867061
+
+In [8]: stats.describe(stats.spearmanr(m.T).correlation.ravel())
+Out[8]: DescribeResult(nobs=2500, minmax=(-0.69950034126828786, 1.0), mean=0.45088551316163411, variance=0.27547004788982637, skewness=-0.608760929993021, kurtosis=-1.1846372160016927)
+
+keep_prob=.95
+iteration 300 run 50
+In [8]: np.``sqrt(np.mean(a[:, 50:].ravel() ** 2))
+Out[8]: 0.046888085040777183
+
+In [9]: stats.describe(stats.spearmanr(m.T).correlation.ravel())
+Out[9]: DescribeResult(nobs=2304, minmax=(-0.66508736049030059, 1.0), mean=0.29225913489357402, variance=0.14825650002427593, skewness=-0.3099358368822546, kurtosis=-0.8944660069166313)
+
+iteration 300 run 500
+0.00399
+
+keep_prob=.9
+run 20 is OK-ish
+0.004-0.005
+
+iteration 300 run 50
+In [21]: stats.describe(sp.correlation.ravel())
+Out[21]: DescribeResult(nobs=2500, minmax=(-0.4299047799396486, 1.0), mean=0.1549038644078268, variance=0.051712757971989959, skewness=0.9585078644581506, kurtosis=2.516031155349215)
+cost_no_noise
+0.004
+
+iteration 600 run 50
+cost_no_noise
+0.004
+
+keep_prob=.8
+iteration 300 run 50
+In [5]: np.sqrt(np.mean(a[:, 50:].ravel() ** 2))
+Out[5]: 0.047168427786846399
+
+In [6]: stats.describe(stats.spearmanr(m.T).correlation.ravel())
+Out[6]: DescribeResult(nobs=2500, minmax=(-0.51744653134632479, 1.0), mean=0.1461986618963762, variance=0.059416857365000388, skewness=1.4862623237903623, kurtosis=3.163678249342029)
+
+keep_prob=.7
+iteration 300 run 50
+In [6]: np.sqrt(np.mean(a[:, 50:].ravel() ** 2))
+Out[6]: 0.044712003536886466
+
+In [7]: stats.describe(stats.spearmanr(m.T).correlation.ravel())
+Out[7]: DescribeResult(nobs=2500, minmax=(-0.41871513839910413, 1.0), mean=0.10332390753371487, variance=0.039765050527528496, skewness=2.4985186138295985, kurtosis=7.829787386216211)
+
+
+
+Percentile .5
+run 20 OK-ish
+0.003-0.004
+In [6]: np.sqrt(np.mean(a[:, 50:].ravel() ** 2))
+Out[6]: 0.038495118665163627
+
+In [7]: stats.describe(stats.spearmanr(m.T).correlation.ravel())
+Out[7]: DescribeResult(nobs=40000, minmax=(-0.74502422032365256, 1.0), mean=0.44679869073566786, variance=0.25063672142545995, skewness=-0.716114938697448, kurtosis=-0.866176171953851)
+
+stats.ttest_1samp((simulation_test[:, 1, 1:].squeeze() * 10 
+                   - pred.squeeze()).ravel(), 0)
+Out[57]:
+Ttest_1sampResult(statistic=-0.94244292245130901, pvalue=0.3459663764103621)
+In [58]:
+
+stats.wilcoxon((simulation_test[:, 1, 1:].squeeze() * 10 
+                - pred.squeeze()).ravel())
+Out[58]:
+WilcoxonResult(statistic=62328763501.0, pvalue=0.64871959520891509)
+
+
+
+t-distribution
+cost, cost_no_noise, pred = tspred.eval_ar(sess, res[0],
+                                           simulation_t_test * 10,
+                                           features_func,
+                                           lambda x: x[1:], 50)
+cost, cost_no_noise
+Out[28]:
+(0.12118258, 0.046576225830363749)
+In [32]:
+
+stats.spearmanr((simulation_test[:, 1, 1:].squeeze() * 10 
+                 - pred.squeeze()).ravel(),
+                simulation_test[:, 2, 1:].ravel())
+Out[32]:
+SpearmanrResult(correlation=0.00055128607741180289, pvalue=0.69681591860489833)
+
+stats.describe((simulation_test[:, 1, 1:].squeeze() * 10 
+                - pred.squeeze()).ravel())
+Out[33]:
+DescribeResult(nobs=499500, minmax=(-0.29904069685562668, 0.79887627233111269), mean=0.0069073809087746157, variance=0.0035439023522726527, skewness=2.8060990975588855, kurtosis=18.889605268262937)
+
+
+
+
+Consistency
+Wilcoxon test
+RMSE loss
+Normal 0.12
+t.   0.31
+exp.  0
+
+
+Quantile Regression
+Normal 0.53
+t    0.011
+exp.  0
+
+Both unbiased for symmetric innovation distribution
+
+Stan
+RMSE
+0.0082   0.0058
+
+
+RNN Internal Contents
+======================
+PCA
+c/h/c+h 1-3 components
+
+ICA
+c 3-4 components h 3-5 components c+h 8-10 components
+
+
+Baseline Explanation of Latent Variable
+======================
+R^2
+RMSE Loss        c/h/c+h    LR c+h  M3 LR  M4 LR   RF c+h  MLP c+h
+   Train + Dev 0.42   0.36   0.54   0.49    0.33     0.87   
+   Spearman R                0.74   0.79    0.79     0.92          .55+/-.3 
+   Test        0.46   0.35   0.54
+Quantile Loss 
+   Train + Dev  0.50  0.48  0.56                      0.87
+   Spearman R               .5 - 0.78 dt    dt        0.92  0      .55+/-.2 
+   Test        0.54   0.55  0.56
+
+
+However for LR  all coeffs -4e5 to 4e5
+ another run -

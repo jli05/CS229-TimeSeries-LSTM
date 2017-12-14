@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>CS229 Project Proposal jli14</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});</script>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="text-center mt-5">CS229 Project Proposal<br>
+          Study of Calibrating Time Series Models by Recurrent Neural Network</h1>
+      <p class="text-center mb-5">Jencir Lee jli14</p>
+
+      <h2>Introduction</h2>
+      <p>The Econometrics has established some standard time series models: Autoregressive Integrated Moving Average (ARIMA) model [Hamil1994], Regime-Switching model [Hamil1994], Generalized Autoregressive Conditional Heteroscedasticity (GARCH) model [Engle1982] [Boll1986], to name a few, for modelling macroeconomy, finanical markets, or general time series. The calibration of these models is generally tailored to the structure of each model, and for most of them, it usually involved conducting the calibration by stages; at each stage, a specific theory would establish the consistency and convergency guarantees of the estimator for the parameters being estimated.</p>
+      <p>A more unified approach is via Bayesian learning. We would impose priors on the parameters in the model and do the calibration usually by the iterative Monte Carlo Markov Chain algorithm. We would lose theoretical guarantees as it relied on the prior and the sampling procedure but this represents a step towards a unified approach.</p>
+      <p>Another route would be to use a Recurrent Neural Network and once we fix the hyperparameters, apply it to the calibration of the time series models. This is a black-box approach: we won't have the convergence gaurantee in priori, we don't even specify a specific form of evolution equation for the time series sample.</p>
+      <p>In this study with limited scope, we propose to apply the Long Short-Term Memory (LSTM) model [Hoch1997] to the calibration of a few typical time series models. We'd pre-fix the parameters of the time series model, simulate trajectories from it, so that we would be able to understand the prediction performance in relation to the ground truth. We'd also study if tuning the hyper-parameters or adding penalty term would impact the prediction performance.</p>
+      <p>The second fold of this study's objective, would be to see if the internal units (Hidden Cell, Memory Cell) of the LSTM network actually captured statistical information about the latent states of the time series models, for complex ones that do involve latent variables. If the LSTM not only gives reasonable prediction performance but also could learn to certain extent the latent state of the time series models, that'd give a big boost to the confidence when we apply this approach to a new time series sample.</p>
+
+      <h2>Outline of the Study Procedure</h2>
+      <p>In summary we'd follow through these steps:</p>
+      <ol>
+        <li><p>(Optional) Given an empirical time series, estimate the parameters for the ARIMA model, Regime-switching model, and GARCH model, using the standard or Bayesian approach.</p></li>
+        <li id="outline-2"><p>We fix the parameters of these time series models, and simulate $n$ trajectories from each model. We split these trajectories into training set and test test, fit LSTM on the training set, document the calibration performance on the test set, as well as in relation to the ground-truth values.</p></li>
+        <li><p>We take the simulated trajectories and fitted LSTM in Step <a href="#outline-2">2</a>, and try to measure if any combination of the internal units of the fitted LSTM is "closest" statistically to the latent states of the simulated time series.</p>
+          <p>In order to do it, we'd first minimise the Wasserstein Distance between two distributions $P$, $Q$, $P$ for the distribution of a certain combination of the internal units of LSTM, $Q$ for the distribution of the latent states of time series. The Wasserstein Distance $W(P,Q)$ is shown to be equivalent to [Vill2009]
+          $$W(P,Q)=\sup_f\left|E_{X\sim P}(f(X))-E_{Y\sim Q}(f(Y))\right|,$$
+          where $f$ is a Lipschitz function in $\mathbb{R}\rightarrow\mathbb{R}$.</p>
+          <p>The training would be adversarial: one neural network would attempt "combination" of the internal units of LSTM to produce the uni-variate distribution $P$ and minimise the Wasserstein Distance, another network would try out $f$ to maximise the same distance.</p>
+          <p>Once the above training is done, we'd have decided the "combination" of the internal units of the LSTM that is "closest" in distribution to the latent state of the simulated time series. We finally compute the Spearman rank-based correlation or the p-value of the Kolmogrov-Smirnov test statistic between the distribution of "combination" of internal units, and that of the latent state of the time series, as an indication of how well the trained LSTM has learned about those latent states.</p></li>
+      </ol>
+      <h2>References</h2>
+      <ul>
+        <li>[Hamil1994] James D. Hamilton, <cite>Time Series Analysis</cite>, 1994.</li>
+        <li>[Engle1982] Robert F. Engle, <cite>Autoregressive Conditional Heteroscedasticity with Estimates of the Variance of United Kingdom Inflation</cite>, Econometrica, 50 (4), 1982.</li>
+        <li>[Boll1986] Tim Bollerslev, <cite>Generalized Autoregressive Conditional Heteroscedasticity</cite>, Econometrics, 31 (3), 1986.</li>
+        <li>[Hoch1997] Sepp Hochreiter, Jürgen Schmidhuber, <cite>Long short-term memory</cite>, Neural Computation, 9 (8), 1997.</li> 
+        <li>[Vill2009] Cédric Villani, <cite>Optimal Transport: Old and New</cite>, Grundlehren der mathematischen Wissenschaften, 2009.</li>
+      </ul>
+    </div>
+  </body>
+</html>
