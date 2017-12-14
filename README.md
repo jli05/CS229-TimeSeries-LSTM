@@ -27,7 +27,7 @@ For a Regime-Switching process, the Cross-Entropy is 0.64+/-0.1 for a Logistic C
 ![Cross-Entropy for Random Forest Classifier on test trajectories](doc/hist-ce-rs-rf.png)
 
 ## Conclusion
-There is at best moderate evidence that LSTM truly "understood" and learnt the internal state of the simulated time series.
+There is at best *moderate* evidence that LSTM truly "understood" and learnt the internal state of the simulated time series.
 
 
 
