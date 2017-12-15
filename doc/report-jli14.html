@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>CS229 Project Report jli14</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+<script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});</script>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="text-center mt-5">CS229 Project Report<br>
+          Calibrate Time Series by LSTM</h1>
+      <p class="text-center mb-5">Jencir Lee jli14</p>
+
+      <p><em>This report contains final fixes with regard to Milestone or Poster. When figures differ, please use this report as final reference.</em></p>
+
+      <h2>Introduction</h2>
+      <p>The Econometrics has established some standard time series models: Autoregressive Integrated Moving Average (ARIMA) model [Hamil1994], Regime-Switching model [Hamil1994], Generalized Autoregressive Conditional Heteroscedasticity (GARCH) model [Engle1982] [Boll1986], to name a few, for modelling macroeconomy, finanical markets, or general time series. For each model, we generallly have a tailored way of calibration and a specific theory for the consistency of the estimator.</p>
+      <p>In this study we propose to apply the Long Short-Term Memory (LSTM) model [Hoch1997] to the calibration of a few typical time series models. We'd pre-fix the parameters of the time series model, simulate trajectories from it, so that we would be able to understand the prediction performance in relation to the ground truth. In order to ascertain the LSTM's capability to truly "learn", we'd simulate time series with latent states, and see if the cell contents on the fitted LSTM explain well those latent states of the simulated time series.</p>
+
+      <h2>The LSTM Model</h2>
+      <p><strong>Architecture</strong> We use the peepholed-version of LSTM, so that the Memory Cell $c_t$ would play a direct role on the values of the gates. We don't use dropout as we found it has no impact on our experiments.</p>
+      <p><strong>Loss Function</strong> Given input series $\left\{x_t\right\}$, we perform a linear projection $g(x_t,h_t)$ to forecast $x_{t+1}$, $\forall t$. In this way we subsume linear models. We use two metrics for training: RMSE on the forecast error $\delta_t=x_{t+1}-g(x_t,h_t)$, and Quantile Loss for the 50%-quantile of $x_{t+1}$, which is $\delta_t\left(\pi-\mathbb{1}_{\{\delta_t\lt 0\}}\right)$, where $\pi=0.5$. For evaluation, we only report the RMSE on the test set. The first $b$ values on every time series are for "burn-in" and disregarded for optimisation, evaluation, or statistical test.</p>
+      <p><strong>Training</strong> We train with SGD with Momentum, with the momentum parameter 0.5. This has equal performance as more complex algorithm. The step size slowly decreases across iterations.</p>
+      
+      <h2>How Well did We Learn Latent States?</h2>
+      <p>We would evaluate the "learning" of latent states by the following procedure,</p>
+      <ol>
+        <li>After the fitting, we forward run the LSTM on the training and test trajectories to extract the cell contents.</li>
+        <li>On the training trajectories, we fit regressor/classifier of the ground-truth latent states of the time series against the LSTM's cell contents.</li>
+        <li>Finally on the test trajectories, we do prediction of the latent states of the time series and evaluate with a Mutual Information-related metric vs the ground truth, specifically, the Spearman correlation for continuous latent states, and the Cross-Entropy for discrete ones.</li>
+      </ol>
+
+      <h2>An ARIMA(2,0,2) Process</h2>
+      <p>We first took the S&amp;P 500 end-of-day price series since 1980, computes its log return, and fit a best ARIMA model to it. The selected model was ARIMA(2,0,2), Below are the parameters information and their standard errors. From the variance $\sigma^2$ of the innovation term we could compute <span class="text-info">$\sigma=0.0112$</span>.</p>
+      <pre>
+Coefficients:
+         ar1     ar2      ma1      ma2  intercept
+      0.0868  0.3667  -0.1150  -0.4068      3e-04
+s.e.  0.1636  0.1446   0.1603   0.1427      1e-04
+
+sigma^2 estimated as 0.0001248:  log likelihood = 28662.03,  aic = -57312.06
+      </pre>
+      <p>We then simulate 5000 trajectories with 1000 time steps using these parameters for training, and 500 such trajectories for test. The burn-in period $b=50$. If we denote one simulated trajectory by $\left\{y_t\right\}$, the innovation terms $\left\{\epsilon_t\right\}$, $t=1,\ldots,1000$, as we know all their values, we'd readily know the expectation $\widehat{y}_t=E\left(y_t|\mathcal{F}_{t^-}\right)$, where $\mathcal{F}_{t^-}$ denotes all the information prior $t$, immediately before the noise $\epsilon_t$ takes effect. We could study our forecast error w.r.t $\left\{\widehat{y}_t\right\}$, denoted by $\left\{\zeta_t\right\}$, $t=1,\ldots,1000$.</p>
+      <p>We also replace the Normal innovation distribution by a $t-$Distribution with $df=4.5$ to generate extra kurtosis, and by an Exponential Distribution to generate asymmetry for experiments. Both would be shifted and scaled when necessary to have zero mean and the same deviation as the Normal innovation distribution.</p>
+
+      <h3>Relation between $\left\{\zeta_t\right\}$ and $\left\{\epsilon_t\right\}$</h3>
+      <p>We could perform Spearman rank-based correlation between the forecast error $\left\{\zeta_t\right\}$ and $\left\{\epsilon_t\right\}$, and compute the p-value of the null for zero correlation. The p-value was always 0.3-0.8 for symmetric innovation terms for the two loss functions, which means our forecast error is always <em>orthogonal</em> to the generative noise. For the asymmetric Exponential Distribution the p-value decreases to 0.07.</p> 
+      <p>This points to the benefit of performing model averaging, aided by the fact that both loss functions are convex w.r.t the prediction variable.</p>
+
+      <h3>Model Averaging</h3>
+      <p>We did bootstrap study and found for both losses it usually takes 20 independent runs to produce an averaged model that could achieve a stable RMSE on the test set <span class="text-info">0.004-0.005 (37%-44% $\sigma$)</span>. For non-Normal innovation distributions, the test RMSE of the averaged model is comparable to that for the Normal distribution.</p>
+      <p>When we increase further the number of independent runs, the RMSE on the test set wouldn't reduce proportionally, for the reason that although the forecast errors are orthogonal to the true innovation terms, there is non-zero correlation across the forecast error series empirically.</p>
+
+      <h3>Bias of Estimator</h3>
+      <p>It is hard to assert anything "rigourously" about the unbiased-ness of the estimators: we can only use two-sample nonparametric test, and the statistical conclusion could be delicate due to the influence of the artificial other sample $y$. Still if we perform the Wilcoxon Test of the Forecast errors $\left\{\zeta_t\right\}$ against the other sample of all zeros, below is the p-value table from one run:</p>
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Innov. Dist</th>
+            <th scope="col">RMSE Loss</th>
+            <th scope="col">Quantile Loss</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Normal</th>
+            <td>0</td>
+            <td class="text-info">0.35</td>
+          </tr>
+          <tr>
+            <th scope="row">$t_{4.5}$</th>
+            <td>0.005</td>
+            <td>0.011</td>
+          </tr>
+          <tr>
+            <th scope="row">Exponential</th>
+            <td>0</td>
+            <td>0</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>We have to take much salt interpreting these p-values. Nevertheless, in the following sections we only use the <span class="text-info">Quantile Loss</span> to report results for its seemingly better un-biasedness.</p>
+
+      <h2>A Stochastic Volatility Process</h2>
+      <p>We now simulate from an AR(2) process with the variance of the innovation terms following a mean-reverting process. Denote by $\phi_t$ the variance of the innovation term at $t$, then
+      $$\begin{align}
+      \log\phi_t&=\text{const. }\kappa+\text{mean-reverting }\pi_t,\\
+      \pi_t&=-\beta\pi_{t-1}+\xi_t,\quad\xi_t\text{ is the white noise}
+      \end{align}$$</p>
+      <p>The parameters are fitted by MCMC based on the S&amp;P 500 daily return series as in the previous section. The latent variable $\phi_t$ is continuous and we'll fit a Linear Regressor and Random Forest Regressor on it.</p>
+      <p>Generally the Spearman correlation between the predicted latent states and the ground truth is <span class="text-info">$0.55\pm 0.2$</span> for both regressors. We plot the histogram of the correlation per test trajectory, based on results of Random Forest Regressor.</p>
+      <img src="hist-spearman-correl-rf.png" alt="Spearman correlation Random Forest" width="400">
+
+      <h2>A Regime-Switching Process</h2>
+      <p>We now simulate AR(2) series with the innovation terms following a two-regime switching process. The regime would follow a Markov Chain to switch between two states; the innovation would take sample from one of two Normal distributions as indicated by the regime. The parameters are again fitted by MCMC from the same historical data (the mixing was very poor however we tried to match the first two moments at least).</p>
+      <p>The latent variable, i.e. the regime is discrete and we'd use a Logistic Classifier and Random Forest Classifier to do the fitting. The Cross-Entropy was <span class="text-info">$0.64\pm 0.1$</span> for the Logistic Classifier, and <span class="text-info">$0.55\pm 0.1$</span> for the Random Forest. Below is the histogram of the Cross-Entropy per test trajectory, based on result of the Random Forest.</p>
+      <img src="hist-ce-rs-rf.png" alt="Cross-Entropy Random Forest" width="400">
+
+      <h2>Conclusion</h2>
+      <p>We fitted the generic LSTM model to simulated time series and tried to relate the latent states of the time series to the cell contents of the fitted LSTM. We found that model averaging tend to produce stable fitting error and that there was only <em>moderate</em> evidence that the LSTM truly "understood" and learnt the internal structure of the time seris.</p>
+      
+      <h2>References</h2>
+      <ul>
+        <li>[Hamil1994] James D. Hamilton, <cite>Time Series Analysis</cite>, 1994.</li>
+        <li>[Engle1982] Robert F. Engle, <cite>Autoregressive Conditional Heteroscedasticity with Estimates of the Variance of United Kingdom Inflation</cite>, Econometrica, 50 (4), 1982.</li>
+        <li>[Boll1986] Tim Bollerslev, <cite>Generalized Autoregressive Conditional Heteroscedasticity</cite>, Econometrics, 31 (3), 1986.</li>
+        <li>[Hoch1997] Sepp Hochreiter, Jürgen Schmidhuber, <cite>Long short-term memory</cite>, Neural Computation, 9 (8), 1997.</li> 
+      </ul>
+    </div>
+  </body>
+</html>
