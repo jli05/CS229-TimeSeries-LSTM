@@ -1,5 +1,6 @@
 ''' Forecast time series '''
 
+import warnings
 import random
 import sys 
 import argparse
@@ -7,6 +8,8 @@ import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
+
+warnings.warn('This file is deprecated. Please use tspred_qtl.py')
 
 def build_lstm_graph(n_features, n_targets, burn_in,
                      num_units, input_keep_prob=1.0, output_keep_prob=1.0,
