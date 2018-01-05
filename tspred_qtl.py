@@ -51,20 +51,30 @@ def build_lstm_graph(n_features, n_targets, quantiles, burn_in,
             'lstm_weights': cell.weights,
             'w_fcst': w_fcst, 'b_fcst': b_fcst}, cell
 
-def train_lstm(sess, ts, features_func, targets_func, quantiles, burn_in,
-               batch_size, lr0=1e-5, lr_decay=(50, .99),
+def train_lstm(sess, ts, y=None,
+               features_func=None, targets_func=None,
+               quantiles=[.5], burn_in=50,
+               batch_size=50, lr0=1e-5, lr_decay=(50, .99),
                n_iter=500, valid_every=5, print_every=5,
                variable_scope='ts', **kwargs):
     ''' Train LSTM for given features and targets functions '''
+    assert (y is not None or
+            ((features_func is not None) and (targets_func is not None)))
+
     # ts <num samples>-by-<length of every sample>
     # Split ts into train, dev set; we'll only use ts_test once at the end
-    ts_train, ts_dev = train_test_split(ts, test_size=.1)
+    test_size = .1
+    if y is not None:
+        features, dev_features, targets, dev_targets = (
+                train_test_split(ts, y, test_size=test_size))
+    else:
+        ts_train, ts_dev = train_test_split(ts, test_size=test_size)
 
-    # Make features, targets for LSTM training
-    features = np.apply_along_axis(features_func, axis=1, arr=ts_train)
-    targets = np.apply_along_axis(targets_func, axis=1, arr=ts_train)
-    dev_features = np.apply_along_axis(features_func, axis=1, arr=ts_dev)
-    dev_targets = np.apply_along_axis(targets_func, axis=1, arr=ts_dev)
+        # Make features, targets for LSTM training
+        features = np.apply_along_axis(features_func, axis=1, arr=ts_train)
+        targets = np.apply_along_axis(targets_func, axis=1, arr=ts_train)
+        dev_features = np.apply_along_axis(features_func, axis=1, arr=ts_dev)
+        dev_targets = np.apply_along_axis(targets_func, axis=1, arr=ts_dev)
 
     if features.ndim == 2:
         features = features[:, :, None]
@@ -100,7 +110,7 @@ def train_lstm(sess, ts, features_func, targets_func, quantiles, burn_in,
         for i in range(n_iter):
             msg = f'Iter {i}'
             # Run SGD
-            batch = random.sample(range(ts_train.shape[0]), batch_size) 
+            batch = random.sample(range(features.shape[0]), batch_size) 
             _, cost = sess.run([optimizer, lstm['cost']],
                                 feed_dict={lstm['x']: features[batch],
                                            lstm['y']: targets[batch]})
